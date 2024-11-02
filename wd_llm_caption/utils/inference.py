@@ -240,9 +240,10 @@ class LLM:
                     self.args.llm_qnt = "none"
                     qnt_config = None
                 self.llm = LlavaForConditionalGeneration.from_pretrained(self.llm_path,  # Load `Llava` model
-                                                                         device_map="auto" \
+                                                                         device_map="cuda" \
                                                                              if not self.args.llm_use_cpu else "cpu",
                                                                          torch_dtype=llm_dtype,
+                                                                         low_cpu_mem_usage=True,
                                                                          quantization_config=qnt_config)
             else:
                 # Load `Llama 3.1 Vision Instruct` LoRA patch
@@ -263,12 +264,10 @@ class LLM:
                         self.llm_path = self.llm_patch_path
 
                 self.llm = AutoModelForCausalLM.from_pretrained(self.llm_path,  # Load `Llama 3.1` or `florence` model
-                                                                device_map="cuda" \
-                                                                    if self.models_type == "florence" and \
-                                                                       not self.args.llm_use_cpu \
-                                                                    else "auto" if not self.args.llm_use_cpu else "cpu",
+                                                                device_map="cuda" if not self.args.llm_use_cpu else "cpu",
                                                                 torch_dtype=llm_dtype,
                                                                 quantization_config=qnt_config,
+                                                                low_cpu_mem_usage=True,
                                                                 trust_remote_code=True \
                                                                     if self.models_type == "florence" else False)
 
@@ -304,15 +303,17 @@ class LLM:
                         self.logger.warning(f"`{adapter_config_json}` already patched.")
                 # Load `Llama 3.2 Vision Instruct`
                 self.llm = MllamaForConditionalGeneration.from_pretrained(self.llm_patch_path,
-                                                                          device_map="auto" \
+                                                                          device_map="cuda" \
                                                                               if not self.args.llm_use_cpu else "cpu",
                                                                           torch_dtype=llm_dtype,
+                                                                          low_cpu_mem_usage=True,
                                                                           quantization_config=qnt_config)
             else:
                 self.llm = MllamaForConditionalGeneration.from_pretrained(self.llm_path,
-                                                                          device_map="auto" \
+                                                                          device_map="cuda" \
                                                                               if not self.args.llm_use_cpu else "cpu",
                                                                           torch_dtype=llm_dtype,
+                                                                          low_cpu_mem_usage=True,
                                                                           quantization_config=qnt_config)
             # # Load `Llama 3.2 Vision Instruct` LoRA patch
             # if self.args.llm_patch and self.llm_patch_path:
@@ -324,14 +325,16 @@ class LLM:
         elif self.models_type == "qwen":
             # Load Qwen 2 VL model
             self.llm = Qwen2VLForConditionalGeneration.from_pretrained(self.llm_path,
-                                                                       device_map="auto" \
+                                                                       device_map="cuda" \
                                                                            if not self.args.llm_use_cpu else "cpu",
                                                                        torch_dtype=llm_dtype,
+                                                                       low_cpu_mem_usage=True,
                                                                        quantization_config=qnt_config)
         elif self.models_type == "minicpm":
             self.llm = AutoModel.from_pretrained(self.llm_path,
                                                  device_map="cuda" if not self.args.llm_use_cpu else "cpu",
                                                  torch_dtype=llm_dtype,
+                                                 low_cpu_mem_usage=True,
                                                  quantization_config=qnt_config,
                                                  trust_remote_code=True)
             self.llm_tokenizer = AutoTokenizer.from_pretrained(self.llm_path, trust_remote_code=True)
